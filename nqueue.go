@@ -1,9 +1,20 @@
 package nqueue
 
 import (
+	"errors"
 	"fmt"
 	"sync"
 )
+
+// 自定义错误变量
+var (
+	ErrQueueClosed      = errors.New("queue is closed")
+	ErrQueueClosedEmpty = errors.New("queue is closed and empty")
+)
+
+// DequeueFunc 是一个函数类型，用于处理出队的元素
+// 返回值为 bool 类型，表示是否继续处理下一个元素
+type DequeueFunc[T any] func(T, bool) bool
 
 // NQueue 是一个泛型队列结构体，用于存储任意类型的数据。
 // 它使用链表实现，支持并发安全的入队和出队操作，并且提供了阻塞和非阻塞的出队方式。
@@ -59,7 +70,7 @@ func (q *NQueue[T]) Enqueue(v T) error {
 	defer q.recvLock.Unlock()
 
 	if !q.status {
-		return fmt.Errorf("is close") // 如果队列已关闭，返回错误信息。
+		return ErrQueueClosed // 如果队列已关闭，返回自定义错误
 	}
 
 	n := q.nodePool.Get().(*node[T]) // 从对象池中获取一个节点。
@@ -84,7 +95,7 @@ func (q *NQueue[T]) Enqueue(v T) error {
 	return nil
 }
 
-// /不阻塞
+// 不阻塞
 // Dequeue 方法是一个非阻塞的出队方法，调用 dequeue 方法进行出队操作。
 func (q *NQueue[T]) Dequeue() (t T, ok bool, isClose bool) {
 	t, ok, isClose = q.dequeue()
@@ -124,7 +135,7 @@ func (q *NQueue[T]) dequeue() (t T, ok bool, isClose bool) {
 	}
 }
 
-// /阻塞    返回值t
+// 阻塞    返回值t
 // DequeueWait 方法是一个阻塞的出队方法，会一直等待直到有元素出队或队列关闭。
 // 返回出队的值、是否成功出队的标志和队列是否已关闭的标志。
 func (q *NQueue[T]) DequeueWait() (t T, ok bool, isClose bool) {
@@ -158,7 +169,7 @@ func (q *NQueue[T]) DequeueFunc(fn DequeueFunc[T]) (err error) {
 				return // 如果 fn 函数返回 false，停止出队并返回。
 			}
 		} else if isClose {
-			return fmt.Errorf("queue is close and empty") // 如果队列关闭且为空，返回错误信息。
+			return ErrQueueClosedEmpty // 返回自定义错误：队列已关闭且为空
 		}
 
 		q.recvLock.Lock()
