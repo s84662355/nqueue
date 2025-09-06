@@ -1,5 +1,4 @@
 package nqueue
- 
 
 type DequeueFunc[T any] func(t T, isClose bool) bool
 
@@ -11,4 +10,4 @@ type Queue[T any] interface {
 	DequeueFunc(fn DequeueFunc[T]) (err error)
 	Count() int64
 	Status() bool
-} 
+}

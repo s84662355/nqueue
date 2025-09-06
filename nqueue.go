@@ -2,7 +2,6 @@ package nqueue
 
 import (
 	"errors"
-	"fmt"
 	"sync"
 )
 
@@ -11,10 +10,6 @@ var (
 	ErrQueueClosed      = errors.New("queue is closed")
 	ErrQueueClosedEmpty = errors.New("queue is closed and empty")
 )
-
-// DequeueFunc 是一个函数类型，用于处理出队的元素
-// 返回值为 bool 类型，表示是否继续处理下一个元素
-type DequeueFunc[T any] func(T, bool) bool
 
 // NQueue 是一个泛型队列结构体，用于存储任意类型的数据。
 // 它使用链表实现，支持并发安全的入队和出队操作，并且提供了阻塞和非阻塞的出队方式。
